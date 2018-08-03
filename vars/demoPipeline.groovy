@@ -42,7 +42,7 @@ def call(body) {
         }
       }
 
-      dslContainerBuild(config.projectDsl, config.projectContainerName)
+      buildContainer(config.projectDsl, config.projectContainerName)
 
       stage('Deploy ECR Repository') {
         // Deploy ECR Repository
