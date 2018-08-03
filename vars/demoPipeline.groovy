@@ -10,6 +10,7 @@ def call(body) {
   node {
     try {
       stage('Checkout SCM') {
+        deleteDir()
         checkout scm
 
         rvm = new RVMHelper()
@@ -42,24 +43,24 @@ def call(body) {
         }
       }
 
-      buildContainer(config.projectDsl, config.projectContainerName)
+      buildArtifact(config.projectDsl, config.projectContainerName)
 
       stage('Deploy ECR Repository') {
         // Deploy ECR Repository
         rvm.rake("deploy:ecr DEPLOY_ENV=${config.projectEnv}")
       }
 
-      stage('Build ${config.projectDescription} Image') {
+      stage("Build ${config.projectDescription} Image") {
         // Build Docker Image
         rvm.rake("build:image:${config.projectContainerName} DEPLOY_ENV=${config.projectEnv}")
       }
 
-      stage('Push ${config.projectDescription} Image') {
+      stage("Push ${config.projectDescription} Image") {
         // Push Docker Image
         rvm.rake("push:image:${config.projectContainerName} DEPLOY_ENV=${config.projectEnv}")
       }
 
-      stage('Setup Container Environment Variables') {
+      stage("Setup Container Environment Variables") {
         // Setup Container Environment Variables
         rvm.rake("setup:secrets DEPLOY_ENV=${config.projectEnv}")
       }
@@ -69,7 +70,7 @@ def call(body) {
         rvm.rake("deploy:alb DEPLOY_ENV=${config.projectEnv}")
       }
 
-      stage('Deploy ${config.projectDescription} Container') {
+      stage("Deploy ${config.projectDescription} Container") {
         // Deploy Container to ECS
         rvm.rake("deploy:container DEPLOY_ENV=${config.projectEnv}")
       }
