@@ -40,6 +40,7 @@ def call(body) {
             }
           }
         }
+      }
 
       dslContainerBuild(config.projectDsl, config.projectContainerName)
 
