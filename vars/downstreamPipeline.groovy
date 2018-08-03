@@ -4,7 +4,6 @@ def call(String deployEnv, Map config) {
   node {
     try {
       stage('Checkout SCM') {
-        checkout scm
         rvm = new RVMHelper()
         rvm.setup(config.rvmVersion, "${config.projectName}-" + deployEnv.toLowerCase())
         env.deployment_id = sh(returnStdout: true, script: 'echo $(date +%Y%m%d%H%M%S)-$(uuidgen | cut -d - -f 1)').trim()
