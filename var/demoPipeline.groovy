@@ -14,72 +14,77 @@ def call(Map params) {
 
   properties([pipelineTriggers([pollSCM('* * * * *')])])
   node {
-    stage('Checkout SCM') {
-      checkout scm
+    try {
+      stage('Checkout SCM') {
+        checkout scm
 
-      rvm = new RVMHelper()
-      rvm.setup(rvmVersion, "${projectName}-" + projectEnv.toLowerCase())
-      env.deployment_id = sh(returnStdout: true, script: 'echo $(date +%Y%m%d%H%M%S)-$(uuidgen | cut -d - -f 1)').trim()
-    }
+        rvm = new RVMHelper()
+        rvm.setup(rvmVersion, "${projectName}-" + projectEnv.toLowerCase())
+        env.deployment_id = sh(returnStdout: true, script: 'echo $(date +%Y%m%d%H%M%S)-$(uuidgen | cut -d - -f 1)').trim()
+      }
 
-    stage('Static Code Analysis') {
-      rvm.rake('static-analysis')
-    }
+      stage('Static Code Analysis') {
+        rvm.rake('static-analysis')
+      }
 
-    stage('Unit Tests') {
+      stage('Unit Tests') {
 
-    }
+      }
 
-    if (runSonarScan) {
-      stage("Sonar Qube Scan") {
-        withSonarQubeEnv('SonarQube') {
-          sh "${sonarScanCommand}"
+      if (runSonarScan) {
+        stage("Sonar Qube Scan") {
+          withSonarQubeEnv('SonarQube') {
+            sh "${sonarScanCommand}"
+          }
+        }
+        stage("Verify Quality Gate") {
+          timeout(time: 1, unit: 'HOURS') {
+            waitForQualityGate abortPipeline: true
+          }
         }
       }
-      stage("Verify Quality Gate") {
-        timeout(time: 1, unit: 'HOURS') {
-          waitForQualityGate abortPipeline: true
+
+      dslContainerBuild(projectDsl, projectContainerName)
+
+      stage('Deploy ECR Repository') {
+        // Deploy ECR Repository
+        rvm.rake("deploy:ecr DEPLOY_ENV=${projectEnv}")
+      }
+
+      stage('Build ${projectDescription} Image') {
+        // Build Docker Image
+        rvm.rake("build:image:${projectContainerName} DEPLOY_ENV=${projectEnv}")
+      }
+
+      stage('Push ${projectDescription} Image') {
+        // Push Docker Image
+        rvm.rake("push:image:${projectContainerName} DEPLOY_ENV=${projectEnv}")
+      }
+
+      stage('Setup Container Environment Variables') {
+        // Setup Container Environment Variables
+        rvm.rake("setup:secrets DEPLOY_ENV=${projectEnv}")
+      }
+
+      stage("Deploy ${projectDescription} ALB") {
+        // Deploy Application Load Balancer
+        rvm.rake("deploy:alb DEPLOY_ENV=${projectEnv}")
+      }
+
+      stage('Deploy ${projectDescription} Container') {
+        // Deploy Container to ECS
+        rvm.rake("deploy:container DEPLOY_ENV=${projectEnv}")
+      }
+
+      if(!downstreamEnv.isEmpty()) {
+        //Build Downstream Prod Job
+        downstreamEnv.each { env ->
+          downstreamPipeline(env, params)
         }
       }
     }
-
-    dslContainerBuild(projectDsl, projectContainerName)
-
-    stage('Deploy ECR Repository') {
-      // Deploy ECR Repository
-      rvm.rake("deploy:ecr DEPLOY_ENV=${projectEnv}")
-    }
-
-    stage('Build ${projectDescription} Image') {
-      // Build Docker Image
-      rvm.rake("build:image:${projectContainerName} DEPLOY_ENV=${projectEnv}")
-    }
-
-    stage('Push ${projectDescription} Image') {
-      // Push Docker Image
-      rvm.rake("push:image:${projectContainerName} DEPLOY_ENV=${projectEnv}")
-    }
-
-    stage('Setup Container Environment Variables') {
-      // Setup Container Environment Variables
-      rvm.rake("setup:secrets DEPLOY_ENV=${projectEnv}")
-    }
-
-    stage("Deploy ${projectDescription} ALB") {
-      // Deploy Application Load Balancer
-      rvm.rake("deploy:alb DEPLOY_ENV=${projectEnv}")
-    }
-
-    stage('Deploy ${projectDescription} Container') {
-      // Deploy Container to ECS
-      rvm.rake("deploy:container DEPLOY_ENV=${projectEnv}")
-    }
-
-    if(!downstreamEnv.isEmpty()) {
-      //Build Downstream Prod Job
-      downstreamEnv.each { env ->
-        downstreamPipeline(env, params)
-      }
+    catch (exc) {
+      slackSend color: "#DD3021", message: "Build Failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
     }
   }
 }
