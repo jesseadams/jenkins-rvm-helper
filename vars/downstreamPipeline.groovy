@@ -6,6 +6,9 @@ def call(String deployEnv, Map config) {
     rvm.setup(config.rvmVersion, "${config.projectName}-" + deployEnv.toLowerCase())
     env.deployment_id = sh(returnStdout: true, script: 'echo $(date +%Y%m%d%H%M%S)-$(uuidgen | cut -d - -f 1)').trim()
   }
+  stage("Promote container") {
+    rvm.rake("promote:image:${config.projectContainerName}")
+  }
 
   stage("Setup ${deployEnv} Container Environment Variables") {
     // Setup Container Environment Variables
