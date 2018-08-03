@@ -32,14 +32,14 @@ def call(body) {
           }
         }
 
-        stage('Verify Quality Gate'){
+        stage('Verify Quality Gate') {
           timeout(time: 1, unit: 'HOURS') {
             def qg = waitForQualityGate()
             if (qg.status != 'OK') {
               error "Pipeline aborted due to quality gate failure: ${qg.status}"
+            }
           }
         }
-      }
 
       dslContainerBuild(config.projectDsl, config.projectContainerName)
 
