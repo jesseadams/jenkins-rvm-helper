@@ -73,7 +73,7 @@ def call(body) {
       stage("Deploy ${config.projectDescription} Container") {
         // Deploy Container to ECS
         rvm.rake("deploy:container DEPLOY_ENV=${config.projectEnv}")
-        slackSend color: "#14A805", message: "Deployed new ${env.JOB_NAME} container to ${deployEnv}"
+        slackSend color: "#14A805", message: "Deployed new ${env.JOB_NAME} container to DEV"
       }
 
       if(!config.downstreamEnv.isEmpty()) {

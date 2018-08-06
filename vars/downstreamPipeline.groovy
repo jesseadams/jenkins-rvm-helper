@@ -23,6 +23,6 @@ def call(String deployEnv, Map config) {
   stage("Deploy ${deployEnv} ${config.projectDescription} Container") {
     // Deploy Container to ECS
     rvm.rake("deploy:container DEPLOY_ENV=${deployEnv}")
-    slackSend color: "#14A805", message: "Deployed new ${env.JOB_NAME} container to ${deployEnv}"
+    slackSend color: "#14A805", message: "Deployed new ${env.JOB_NAME} container to PROD"
   }
 }
