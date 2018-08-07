@@ -22,8 +22,14 @@ def call(body) {
         rvm.rake('static-analysis')
       }
 
-      stage('Unit Tests') {
+      if(projectDsl == 'angular') {
+        stage('Unit Tests') {
+          sh 'npm run test'
+        }
+      else {
+        stage('Unit Tests') {
 
+        }
       }
 
       if (config.runSonarScan) {
