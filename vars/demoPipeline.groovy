@@ -24,6 +24,7 @@ def call(body) {
 
       if(config.projectDsl == 'angular') {
         stage('Unit Tests') {
+          sh "npm install --save-dev @angular-devkit/build-angular"
           sh 'npm run test'
         }
       } else {

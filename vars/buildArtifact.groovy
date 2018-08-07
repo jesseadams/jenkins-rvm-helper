@@ -3,7 +3,6 @@ import pipeline.helpers.RVMHelper
 def call(String projectDsl, String projectContainerName) {
   if(projectDsl == 'angular') {
     stage('Build Angular') {
-      sh "npm install --save-dev @angular-devkit/build-angular"
       sh "ng build --output-path containers/${projectContainerName}/dist/ --prod"
     }
   } else if (projectDsl == 'java') {
