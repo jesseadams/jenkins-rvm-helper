@@ -90,8 +90,8 @@ def call(body) {
       }
     }
     catch (exc) {
-      throw exc
       slackSend color: "#DD3021", message: "Build Failed - ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+      throw exc
     }
   }
 }
