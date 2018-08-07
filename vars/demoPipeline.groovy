@@ -22,7 +22,7 @@ def call(body) {
         rvm.rake('static-analysis')
       }
 
-      if(projectDsl == 'angular') {
+      if(config.projectDsl == 'angular') {
         stage('Unit Tests') {
           sh 'npm run test'
         }
