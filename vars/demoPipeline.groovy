@@ -26,7 +26,7 @@ def call(body) {
         stage('Unit Tests') {
           sh 'npm run test'
         }
-      else {
+      } else {
         stage('Unit Tests') {
 
         }
