@@ -25,6 +25,7 @@ def call(body) {
       if(config.projectDsl == 'angular') {
         stage('Unit Tests') {
           sh "npm install --save-dev @angular-devkit/build-angular"
+          sh "sed -ie 's|singleRun: false|singleRun: true|g' src/karma.conf.js"
           sh 'npm run test'
         }
       } else {
